@@ -19,7 +19,7 @@ from utils import *
 # read the parameter
 # argument parsing
 parser = argparse.ArgumentParser(description='Main function for difference-inducing input generation in MNIST dataset')
-parser.add_argument('transformation', help="realistic transformation type", choices=['light', 'occl', 'blackout'])
+parser.add_argument('transformation', help="realistic transformation type", choices=['light', 'occl', 'blackout'])#
 parser.add_argument('weight_diff', help="weight hyperparm to control differential behavior", type=float)
 parser.add_argument('weight_nc', help="weight hyperparm to control neuron coverage", type=float)
 parser.add_argument('step', help="step size of gradient descent", type=float)
@@ -55,8 +55,10 @@ model3 = Model3(input_tensor=input_tensor)
 # init coverage table
 model_layer_dict1, model_layer_dict2, model_layer_dict3 = init_coverage_tables(model1, model2, model3)
 
+
 # ==============================================================================================
 # start gen inputs
+#seed: #
 for _ in xrange(args.seeds):
     gen_img = np.expand_dims(random.choice(x_test), axis=0)
     orig_img = gen_img.copy()
@@ -109,6 +111,7 @@ for _ in xrange(args.seeds):
         loss1 = K.mean(model1.get_layer('before_softmax').output[..., orig_label])
         loss2 = K.mean(model2.get_layer('before_softmax').output[..., orig_label])
         loss3 = -args.weight_diff * K.mean(model3.get_layer('before_softmax').output[..., orig_label])
+
     loss1_neuron = K.mean(model1.get_layer(layer_name1).output[..., index1])
     loss2_neuron = K.mean(model2.get_layer(layer_name2).output[..., index2])
     loss3_neuron = K.mean(model3.get_layer(layer_name3).output[..., index3])
@@ -135,6 +138,7 @@ for _ in xrange(args.seeds):
         elif args.transformation == 'blackout':
             grads_value = constraint_black(grads_value)  # constraint the gradients value
 
+
         gen_img += grads_value * args.step
         predictions1 = np.argmax(model1.predict(gen_img)[0])
         predictions2 = np.argmax(model2.predict(gen_img)[0])
@@ -152,8 +156,7 @@ for _ in xrange(args.seeds):
             averaged_nc = (neuron_covered(model_layer_dict1)[0] + neuron_covered(model_layer_dict2)[0] +
                            neuron_covered(model_layer_dict3)[0]) / float(
                 neuron_covered(model_layer_dict1)[1] + neuron_covered(model_layer_dict2)[1] +
-                neuron_covered(model_layer_dict3)[
-                    1])
+                neuron_covered(model_layer_dict3)[1])
             print(bcolors.OKGREEN + 'averaged covered neurons %.3f' % averaged_nc + bcolors.ENDC)
 
             gen_img_deprocessed = deprocess_image(gen_img)
